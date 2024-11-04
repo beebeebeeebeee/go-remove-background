@@ -17,6 +17,11 @@ type App struct {
 }
 
 func NewApp(port string) *App {
+	err := os.MkdirAll("uploads", os.ModePerm)
+	if err != nil {
+		log.Fatalf("Error creating the uploads directory: %v", err)
+	}
+
 	return &App{
 		Port: port,
 	}
