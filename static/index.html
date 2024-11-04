@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Background Removal Application</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./static/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+<div id="snackbar"></div>
+<div class="container">
+    <h1>Remove Background from Your Image</h1>
+    <p>Select an image from your device, preview it, and upload it to remove the background.</p>
+    <div class="btn-group">
+        <div class="upload-btn-wrapper btn">
+            Select Image
+            <input type="file" name="image" accept="image/*" required onchange="previewImage(event)">
+        </div>
+        <button class="btn" onclick="uploadImage()">Remove Background</button>
+    </div>
+    <div class="preview" id="preview"></div>
+</div>
+<script src="./static/scripts.js"></script>
+</body>
+</html>
