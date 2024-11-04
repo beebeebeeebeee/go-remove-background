@@ -7,3 +7,4 @@ services:
       - "${APP_PORT}:${APP_PORT}"
     environment:
       - "APP_PORT=${APP_PORT}"
+      - "BASE_URL=${BASE_URL}"
