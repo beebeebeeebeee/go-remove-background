@@ -37,7 +37,7 @@ async function uploadImage() {
     preview.innerHTML = '<p>Loading...</p>'; // You can replace this with a spinner if you prefer
 
     try {
-        const response = await axios.post('/upload', formData, { responseType: 'arraybuffer' });
+        const response = await axios.post('./upload', formData, { responseType: 'arraybuffer' });
         const base64Image = btoa(
             new Uint8Array(response.data)
                 .reduce((data, byte) => data + String.fromCharCode(byte), '')
