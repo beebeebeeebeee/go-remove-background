@@ -13,12 +13,12 @@ import (
 )
 
 type App struct {
-	BaseURL string
+	Port string
 }
 
-func NewApp(baseURL string) *App {
+func NewApp(port string) *App {
 	return &App{
-		BaseURL: baseURL,
+		Port: port,
 	}
 }
 
@@ -30,8 +30,8 @@ func (a *App) Run() {
 
 	http.HandleFunc("/upload", a.uploadHandler)
 
-	fmt.Println("Server started at :8080")
-	err := http.ListenAndServe(":8080", nil)
+	fmt.Printf("Server started at :%s\n", a.Port)
+	err := http.ListenAndServe(fmt.Sprintf(":%s", a.Port), nil)
 	if err != nil {
 		log.Println(err)
 		return

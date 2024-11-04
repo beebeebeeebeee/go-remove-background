@@ -13,11 +13,11 @@ func main() {
 		log.Fatalf("Error loading .env file")
 	}
 
-	baseURL := os.Getenv("BASE_URL")
-	if baseURL == "" {
+	port := os.Getenv("APP_PORT")
+	if port == "" {
 		log.Fatalf("BASE_URL not set in .env file")
 	}
 
-	a := app.NewApp(baseURL)
+	a := app.NewApp(port)
 	a.Run()
 }
