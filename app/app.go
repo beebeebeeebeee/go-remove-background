@@ -7,6 +7,7 @@ import (
 	"image/color"
 	"image/png"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -35,8 +36,21 @@ func (a *App) Run() {
 
 	http.HandleFunc("/upload", a.uploadHandler)
 
-	fmt.Printf("Server started at :%s\n", a.Port)
-	err := http.ListenAndServe(fmt.Sprintf(":%s", a.Port), nil)
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Server started at:\n")
+	fmt.Printf("  - http://localhost:%s\n", a.Port)
+	for _, addr := range addrs {
+		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				fmt.Printf("  - http://%s:%s\n", ipnet.IP.String(), a.Port)
+			}
+		}
+	}
+	err = http.ListenAndServe(fmt.Sprintf(":%s", a.Port), nil)
 	if err != nil {
 		log.Println(err)
 		return
