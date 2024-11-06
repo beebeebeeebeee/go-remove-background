@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"remove-background/app"
+	"remove-background/app/service"
 )
 
 func main() {
@@ -18,6 +19,8 @@ func main() {
 		log.Fatalf("BASE_URL not set in .env file")
 	}
 
-	a := app.NewApp(port)
+	i := service.NewImageService()
+
+	a := app.NewApp(port, i)
 	a.Run()
 }

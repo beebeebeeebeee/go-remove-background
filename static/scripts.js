@@ -1,3 +1,17 @@
+let colorThreshold = 30 * 256;
+let backgroundColor = 'white';
+let invertColors = false;
+
+document.querySelectorAll('input[name="backgroundColor"]').forEach((elem) => {
+    elem.addEventListener('change', function(event) {
+        backgroundColor = event.target.value;
+    });
+});
+
+document.getElementById('invertColors').addEventListener('change', function(event) {
+    invertColors = event.target.checked;
+});
+
 function showSnackbar(message) {
     const snackbar = document.getElementById('snackbar');
     snackbar.textContent = message;
@@ -11,7 +25,7 @@ function previewImage(event) {
     const file = event.target.files[0];
     const reader = new FileReader();
 
-    reader.onload = function(e) {
+    reader.onload = function (e) {
         const preview = document.getElementById('preview');
         preview.innerHTML = `<img src="${e.target.result}" alt="Image Preview" style="max-width: 100%; height: auto;">`;
     };
@@ -31,13 +45,16 @@ async function uploadImage() {
 
     const formData = new FormData();
     formData.append('image', file);
+    formData.append('threshold', colorThreshold);
+    formData.append('backgroundColor', backgroundColor);
+    formData.append('invertColors', invertColors);
 
     // Show loading indicator
     const preview = document.getElementById('preview');
     preview.innerHTML = '<p>Loading...</p>'; // You can replace this with a spinner if you prefer
 
     try {
-        const response = await axios.post('./upload', formData, { responseType: 'arraybuffer' });
+        const response = await axios.post('./upload', formData, {responseType: 'arraybuffer'});
         const base64Image = btoa(
             new Uint8Array(response.data)
                 .reduce((data, byte) => data + String.fromCharCode(byte), '')
@@ -53,4 +70,9 @@ async function uploadImage() {
         showSnackbar('Error uploading image.');
         preview.innerHTML = ''; // Clear the loading indicator
     }
+}
+
+function updateThresholdValue(value) {
+    document.getElementById('thresholdValue').innerText = value;
+    colorThreshold = value * 256;
 }

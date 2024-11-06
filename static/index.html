@@ -17,14 +17,35 @@
 <div class="container">
     <h1>Remove Background from Your Image</h1>
     <p>Select an image from your device, preview it, and upload it to remove the background.</p>
-    <div class="btn-group">
-        <div class="upload-btn-wrapper btn">
-            Select Image
-            <input type="file" name="image" accept="image/*" required onchange="previewImage(event)">
+    <hr />
+    <div class="setting">
+        <div class="slider-container">
+            <label for="thresholdSlider">Color Threshold: <span id="thresholdValue">30</span></label>
+            <input type="range" id="thresholdSlider" min="0" max="100" value="30" oninput="updateThresholdValue(this.value)">
         </div>
-        <button class="btn" onclick="uploadImage()">Remove Background</button>
+        <div class="background-toggle">
+            <label>
+                <input type="radio" name="backgroundColor" value="white" checked> White
+            </label>
+            <label>
+                <input type="radio" name="backgroundColor" value="black"> Black
+            </label>
+        </div>
+        <div class="invert-toggle">
+            <label>
+                <input type="checkbox" id="invertColors"> Invert Colors
+            </label>
+        </div>
+        <div class="btn-group">
+            <div class="upload-btn-wrapper btn">
+                Select Image
+                <input type="file" name="image" accept="image/*" required onchange="previewImage(event)">
+            </div>
+            <button class="btn" onclick="uploadImage()">Remove Background</button>
+        </div>
     </div>
     <div class="preview" id="preview"></div>
+
 </div>
 <script src="./static/scripts.js"></script>
 </body>

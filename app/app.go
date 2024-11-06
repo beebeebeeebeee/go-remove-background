@@ -2,23 +2,27 @@ package app
 
 import (
 	"fmt"
-	"github.com/disintegration/imaging"
 	"image"
-	"image/color"
 	"image/png"
 	"log"
 	"net"
 	"net/http"
-	"remove-background/app/helper"
+	"remove-background/app/service"
+	"strconv"
 )
 
 type App struct {
-	Port string
+	Port         string
+	ImageService *service.ImageService
 }
 
-func NewApp(port string) *App {
+func NewApp(
+	port string,
+	imageService *service.ImageService,
+) *App {
 	return &App{
-		Port: port,
+		Port:         port,
+		ImageService: imageService,
 	}
 }
 
@@ -49,28 +53,56 @@ func (a *App) Run() {
 		return
 	}
 }
-
 func (a *App) uploadHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Received a request to upload an image")
+	log.Printf("Request Method: %s, URL: %s, RemoteAddr: %s", r.Method, r.URL, r.RemoteAddr)
+
 	if r.Method != "POST" {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
 
-	file, _, err := r.FormFile("image")
+	file, header, err := r.FormFile("image")
 	if err != nil {
 		http.Error(w, "Error retrieving the file", http.StatusInternalServerError)
 		return
 	}
 	defer file.Close()
+	log.Printf("Uploaded File: %s, Size: %d", header.Filename, header.Size)
+
+	thresholdStr := r.FormValue("threshold")
+	threshold, err := strconv.Atoi(thresholdStr)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Invalid threshold value", http.StatusBadRequest)
+		return
+	}
+	log.Printf("Threshold: %d", threshold)
+	similarColorThreshold := uint32(threshold)
+
+	backgroundColor := r.FormValue("backgroundColor")
+	log.Printf("Background Color: %s", backgroundColor)
+	invertColors := r.FormValue("invertColors") == "true"
+	log.Printf("Invert Colors: %t", invertColors)
 
 	img, _, err := image.Decode(file)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, "Error decoding the image", http.StatusInternalServerError)
 		return
 	}
 
-	processedImg := a.removeBackground(img)
+	processedImg := a.ImageService.RemoveBackground(
+		img,
+		similarColorThreshold,
+		backgroundColor,
+	)
+	if invertColors {
+		processedImg = a.ImageService.InvertColor(
+			processedImg,
+			similarColorThreshold,
+		)
+	}
 
 	w.Header().Set("Content-Type", "image/png")
 	err = png.Encode(w, processedImg)
@@ -79,24 +111,5 @@ func (a *App) uploadHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error encoding the image", http.StatusInternalServerError)
 		return
 	}
-}
-
-func (a *App) removeBackground(img image.Image) image.Image {
-	whiteColor := color.NRGBA{255, 255, 255, 255}
-
-	bounds := img.Bounds()
-	newImg := imaging.New(bounds.Dx(), bounds.Dy(), color.NRGBA{0, 0, 0, 0})
-
-	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			pixel := img.At(x, y)
-			if helper.IsSimilarColor(pixel, whiteColor) {
-				newImg.Set(x, y, color.NRGBA{0, 0, 0, 0})
-			} else {
-				newImg.Set(x, y, pixel)
-			}
-		}
-	}
-
-	return newImg
+	log.Println("Image processed and response sent successfully")
 }
