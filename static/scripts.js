@@ -1,4 +1,4 @@
-let colorThreshold = 30 * 256;
+let colorThreshold = 100 * 256;
 let backgroundColor = 'white';
 let invertColors = false;
 
