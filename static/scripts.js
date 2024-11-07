@@ -1,15 +1,13 @@
 let colorThreshold = 100 * 256;
-let backgroundColor = 'white';
-let invertColors = false;
+let backgroundColor = '#ffffff';
+let invertBW = false;
 
-document.querySelectorAll('input[name="backgroundColor"]').forEach((elem) => {
-    elem.addEventListener('change', function(event) {
-        backgroundColor = event.target.value;
-    });
+document.getElementById('backgroundColorPicker').addEventListener('input', function(event) {
+    backgroundColor = event.target.value;
 });
 
-document.getElementById('invertColors').addEventListener('change', function(event) {
-    invertColors = event.target.checked;
+document.getElementById('invertBW').addEventListener('change', function(event) {
+    invertBW = event.target.checked;
 });
 
 function showSnackbar(message) {
@@ -47,7 +45,7 @@ async function uploadImage() {
     formData.append('image', file);
     formData.append('threshold', colorThreshold);
     formData.append('backgroundColor', backgroundColor);
-    formData.append('invertColors', invertColors);
+    formData.append('invertBW', invertBW);
 
     // Show loading indicator
     const preview = document.getElementById('preview');

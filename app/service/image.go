@@ -21,21 +21,8 @@ func NewImageService() *ImageService {
 func (i *ImageService) RemoveBackground(
 	img image.Image,
 	similarColorThreshold uint32,
-	backgroundColor string,
+	filterColor color.NRGBA,
 ) image.Image {
-	var filterColor color.NRGBA
-	switch backgroundColor {
-	case "black":
-		filterColor = BlackColor
-		break
-	case "white":
-		filterColor = WhiteColor
-		break
-	default:
-		filterColor = WhiteColor
-		break
-	}
-
 	bounds := img.Bounds()
 	newImg := imaging.New(bounds.Dx(), bounds.Dy(), EmptyColor)
 
@@ -53,7 +40,7 @@ func (i *ImageService) RemoveBackground(
 	return newImg
 }
 
-func (i *ImageService) InvertColor(
+func (i *ImageService) InvertBW(
 	img image.Image,
 	similarColorThreshold uint32,
 ) image.Image {

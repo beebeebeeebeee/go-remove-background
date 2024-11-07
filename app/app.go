@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"remove-background/app/helper"
 	"remove-background/app/service"
 	"strconv"
 )
@@ -81,9 +82,16 @@ func (a *App) uploadHandler(w http.ResponseWriter, r *http.Request) {
 	similarColorThreshold := uint32(threshold)
 
 	backgroundColor := r.FormValue("backgroundColor")
-	log.Printf("Background Color: %s", backgroundColor)
-	invertColors := r.FormValue("invertColors") == "true"
-	log.Printf("Invert Colors: %t", invertColors)
+	backgroundNRGBA, err := helper.ConvertHexToNRGBA(backgroundColor)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Invalid background color", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("Background Color: %s, %v", backgroundColor, backgroundNRGBA)
+	invertBW := r.FormValue("invertBW") == "true"
+	log.Printf("Invert BW: %t", invertBW)
 
 	img, _, err := image.Decode(file)
 	if err != nil {
@@ -95,10 +103,10 @@ func (a *App) uploadHandler(w http.ResponseWriter, r *http.Request) {
 	processedImg := a.ImageService.RemoveBackground(
 		img,
 		similarColorThreshold,
-		backgroundColor,
+		backgroundNRGBA,
 	)
-	if invertColors {
-		processedImg = a.ImageService.InvertColor(
+	if invertBW {
+		processedImg = a.ImageService.InvertBW(
 			processedImg,
 			similarColorThreshold,
 		)

@@ -8,7 +8,8 @@
     <meta http-equiv="Expires" content="0">
     <base href="%BASE_URL%">
     <title>Background Removal Application</title>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&display=swap"
+          rel="stylesheet">
     <link rel="stylesheet" href="./static/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
@@ -17,23 +18,20 @@
 <div class="container">
     <h1>Remove Background from Your Image</h1>
     <p>Select an image from your device, preview it, and upload it to remove the background.</p>
-    <hr />
+    <hr/>
     <div class="setting">
         <div class="slider-container">
             <label for="thresholdSlider">Color Threshold: <span id="thresholdValue">100</span></label>
-            <input type="range" id="thresholdSlider" min="0" max="256" value="100" oninput="updateThresholdValue(this.value)">
+            <input type="range" id="thresholdSlider" min="0" max="256" value="100"
+                   oninput="updateThresholdValue(this.value)">
         </div>
         <div class="background-toggle">
-            <label>
-                <input type="radio" name="backgroundColor" value="white" checked> White
-            </label>
-            <label>
-                <input type="radio" name="backgroundColor" value="black"> Black
-            </label>
+            <label for="backgroundColorPicker">Background Color:</label>
+            <input type="color" id="backgroundColorPicker" value="#ffffff">
         </div>
         <div class="invert-toggle">
             <label>
-                <input type="checkbox" id="invertColors"> Invert Colors
+                <input type="checkbox" id="invertBW"> Invert Black & White
             </label>
         </div>
         <div class="btn-group">
