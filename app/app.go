@@ -7,32 +7,45 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"remove-background/app/frontend"
 	"remove-background/app/helper"
 	"remove-background/app/service"
 	"strconv"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 type App struct {
 	Port         string
 	ImageService *service.ImageService
+	Echo         *echo.Echo
 }
 
 func NewApp(
 	port string,
 	imageService *service.ImageService,
 ) *App {
+	e := echo.New()
+
+	// Add middleware
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
+
 	return &App{
 		Port:         port,
 		ImageService: imageService,
+		Echo:         e,
 	}
 }
 
 func (a *App) Run() {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "static/index.html")
-	})
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	http.HandleFunc("/upload", a.uploadHandler)
+	// Register frontend handlers
+	frontend.RegisterHandlers(a.Echo)
+
+	// Register API routes
+	a.Echo.POST("/api/upload", a.uploadHandler)
 
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
@@ -48,58 +61,62 @@ func (a *App) Run() {
 			}
 		}
 	}
-	err = http.ListenAndServe(fmt.Sprintf(":%s", a.Port), nil)
+
+	err = a.Echo.Start(fmt.Sprintf(":%s", a.Port))
 	if err != nil {
 		log.Println(err)
 		return
 	}
 }
-func (a *App) uploadHandler(w http.ResponseWriter, r *http.Request) {
+
+func (a *App) uploadHandler(c echo.Context) error {
 	log.Println("Received a request to upload an image")
-	log.Printf("Request Method: %s, URL: %s, RemoteAddr: %s", r.Method, r.URL, r.RemoteAddr)
+	log.Printf("Request Method: %s, URL: %s, RemoteAddr: %s", c.Request().Method, c.Request().URL, c.Request().RemoteAddr)
 
-	if r.Method != "POST" {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-
-	file, header, err := r.FormFile("image")
+	// Get the uploaded file
+	file, err := c.FormFile("image")
 	if err != nil {
-		http.Error(w, "Error retrieving the file", http.StatusInternalServerError)
-		return
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error retrieving the file")
 	}
-	defer file.Close()
-	log.Printf("Uploaded File: %s, Size: %d", header.Filename, header.Size)
 
-	thresholdStr := r.FormValue("threshold")
+	// Open the file
+	src, err := file.Open()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error opening the file")
+	}
+	defer src.Close()
+
+	log.Printf("Uploaded File: %s, Size: %d", file.Filename, file.Size)
+
+	// Get form values
+	thresholdStr := c.FormValue("threshold")
 	threshold, err := strconv.Atoi(thresholdStr)
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "Invalid threshold value", http.StatusBadRequest)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid threshold value")
 	}
 	log.Printf("Threshold: %d", threshold)
 	similarColorThreshold := uint32(threshold)
 
-	backgroundColor := r.FormValue("backgroundColor")
+	backgroundColor := c.FormValue("backgroundColor")
 	backgroundNRGBA, err := helper.ConvertHexToNRGBA(backgroundColor)
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "Invalid background color", http.StatusBadRequest)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid background color")
 	}
 
 	log.Printf("Background Color: %s, %v", backgroundColor, backgroundNRGBA)
-	invertBW := r.FormValue("invertBW") == "true"
+	invertBW := c.FormValue("invertBW") == "true"
 	log.Printf("Invert BW: %t", invertBW)
 
-	img, _, err := image.Decode(file)
+	// Decode the image
+	img, _, err := image.Decode(src)
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "Error decoding the image", http.StatusInternalServerError)
-		return
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error decoding the image")
 	}
 
+	// Process the image
 	processedImg := a.ImageService.RemoveBackground(
 		img,
 		similarColorThreshold,
@@ -112,12 +129,16 @@ func (a *App) uploadHandler(w http.ResponseWriter, r *http.Request) {
 		)
 	}
 
-	w.Header().Set("Content-Type", "image/png")
-	err = png.Encode(w, processedImg)
+	// Set response headers
+	c.Response().Header().Set("Content-Type", "image/png")
+
+	// Encode and send the response
+	err = png.Encode(c.Response().Writer, processedImg)
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "Error encoding the image", http.StatusInternalServerError)
-		return
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error encoding the image")
 	}
+
 	log.Println("Image processed and response sent successfully")
+	return nil
 }

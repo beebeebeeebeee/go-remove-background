@@ -1,20 +1,44 @@
-FROM golang:1.22.5-bullseye as builder
+# Frontend build stage
+FROM node:24-alpine as frontend-builder
+
+WORKDIR /app/frontend
+COPY app/frontend/package.json app/frontend/yarn.lock ./
+RUN yarn install --frozen-lockfile
+
+COPY app/frontend/ ./
+RUN yarn build
+
+# Go build stage
+FROM golang:1.24.5-bullseye as go-builder
 
 ENV GO111MODULE=on
 
-RUN mkdir -p /microservice
-ADD . /microservice
 WORKDIR /microservice
+COPY . .
+
+# Copy the built frontend from the frontend-builder stage
+COPY --from=frontend-builder /app/frontend/dist ./app/frontend/dist
 
 RUN go mod download
-COPY . .
-RUN go build ./cmd/app/main.go
+RUN go build -o main ./cmd/app/main.go
 
+# Runtime stage
 FROM ubuntu:22.04
-RUN mkdir /microservice
+
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /microservice
-COPY --from=builder /microservice/static ./static
-COPY --from=builder /microservice/main .
-COPY --from=builder /microservice/scripts/start_service.sh .
+
+# Copy the built Go binary
+COPY --from=go-builder /microservice/main .
+
+# Copy the built frontend
+COPY --from=go-builder /microservice/app/frontend/dist ./app/frontend/dist
+
+# Copy the start script
+COPY --from=go-builder /microservice/scripts/start_service.sh .
 RUN chmod a+x ./start_service.sh
+
+EXPOSE 8080
+
 ENTRYPOINT ["./start_service.sh"]
