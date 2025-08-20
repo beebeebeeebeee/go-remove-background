@@ -1,12 +1,14 @@
 # Frontend build stage
 FROM node:24-alpine as frontend-builder
 
+ARG BASE_URL
+
 WORKDIR /app/frontend
 COPY app/frontend/package.json app/frontend/yarn.lock ./
 RUN yarn install --frozen-lockfile
 
 COPY app/frontend/ ./
-RUN yarn build
+RUN yarn build --base=${BASE_URL}
 
 # Go build stage
 FROM golang:1.24.5-bullseye as go-builder
