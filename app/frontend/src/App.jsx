@@ -31,6 +31,12 @@ import {
 import axios from 'axios'
 import './App.css'
 
+// Create axios instance with base URL
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || '',
+  timeout: 30000
+})
+
 function App() {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
@@ -88,7 +94,7 @@ function App() {
     formData.append('invertBW', invertBW)
 
     try {
-      const response = await axios.post('/api/upload', formData, {
+      const response = await api.post('/api/upload', formData, {
         responseType: 'arraybuffer'
       })
       
